@@ -102,8 +102,6 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 	    mOpenCvCameraView.setCvCameraViewListener(this);
 	    //Fin inicio de interfaz
 	    
-	    
-	    
 	}
 	
 	@Override
@@ -160,15 +158,29 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 			
 			
 			
+			/*Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(19,19));
+			Mat closed = new Mat();
+			Imgproc.morphologyEx(mauxiliar, closed, Imgproc.MORPH_CLOSE, kernel);
+
+			mauxiliar.convertTo(mauxiliar, CvType.CV_32F); // divide requires floating-point
+			Core.divide(mauxiliar, closed, mauxiliar, 1, CvType.CV_32F);
+			Core.normalize(mauxiliar, mauxiliar, 0, 255, Core.NORM_MINMAX);
+			mauxiliar.convertTo(mauxiliar, CvType.CV_8UC1); // convert back to unsigned int
+			Imgproc.threshold(mauxiliar, mauxiliar, -1, 255, Imgproc.THRESH_BINARY_INV+Imgproc.THRESH_OTSU);*/
+			
+			
+			
 			
 			Imgproc.cvtColor(inputFrame, mauxiliar, Imgproc.COLOR_BGR2GRAY);
 			//Debug
 			if(indice == 0)
 				Utils.matToBitmap(mauxiliar, mBitmapPreview); 
+			
 			Imgproc.GaussianBlur(mauxiliar,mauxiliar, new Size(7,7),0);
 			//Debug
 			if(indice == 1)
 				Utils.matToBitmap(mauxiliar, mBitmapPreview); 
+			
 			Imgproc.adaptiveThreshold(mauxiliar, mauxiliar, 255, 
 					Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
 			//Debug
@@ -182,19 +194,14 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 			mhorizontal = new Mat(new Size(mauxiliar.cols(),mauxiliar.rows()),mauxiliar.type(),mnegro);
 			
 			
-			
-			//Core.divide(auxiliar,auxiliar2,auxiliar);
-			//Core.normalize(auxiliar, auxiliar, 0, 255, Core.NORM_MINMAX);
-			
-			
 			//Vertical lines
-			Imgproc.Sobel(mauxiliar, mderivate, CvType.CV_8U, 1, 0, 3, 1, 0);
+			Imgproc.Sobel(mauxiliar, mderivate, CvType.CV_8U, 1, 0, Imgproc.CV_SCHARR, 1, 0);
 			//Debug
 			if(indice == 3)
 				Utils.matToBitmap(mderivate, mBitmapPreview); 
 			
-			Imgproc.morphologyEx(mderivate,mderivate,Imgproc.MORPH_DILATE,
-							Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3,10)));
+			Imgproc.morphologyEx(mderivate,mderivate,Imgproc.MORPH_ERODE,
+							Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(20,20)));
 			
 			//Debug
 			if(indice == 4)
@@ -208,7 +215,7 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 				mcontour = mcontours.get(i);
 				
 				Rect boundRect = Imgproc.boundingRect(mcontour);
-				if(boundRect.height > 300)
+				if(boundRect.height > 400)
 					Imgproc.drawContours(mvertical, mcontours, i, mblanco, 4);
 				//else
 				//	Imgproc.drawContours(auxiliar, contours, i, negro, 4);
@@ -232,13 +239,13 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 			
 			
 			//Horizontal lines
-			Imgproc.Sobel(mauxiliar, mderivate, CvType.CV_8U, 0, 1, 3, 1, 0);
+			Imgproc.Sobel(mauxiliar, mderivate, CvType.CV_8U, 0, 1, Imgproc.CV_SCHARR, 1, 0);
 			//Debug
 			if(indice == 6)
 				Utils.matToBitmap(mderivate, mBitmapPreview); 
 			
-			Imgproc.morphologyEx(mderivate,mderivate,Imgproc.MORPH_DILATE,
-							Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(10,3)));
+			Imgproc.morphologyEx(mderivate,mderivate,Imgproc.MORPH_ERODE,
+							Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(20,20)));
 			//Debug
 			if(indice == 7)
 				Utils.matToBitmap(mderivate, mBitmapPreview); 
@@ -251,7 +258,7 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 				mcontour = mcontours.get(i);
 				
 				Rect boundRect = Imgproc.boundingRect(mcontour);
-				if(boundRect.width > 300)
+				if(boundRect.width > 250)
 					Imgproc.drawContours(mhorizontal, mcontours, i, mblanco, 4);
 			}
 			
@@ -264,12 +271,13 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 			
 			//Los puntos de union de las lineas verticales y horizontales son los puntos de union
 			Core.bitwise_and(mvertical, mhorizontal, mauxiliar);
+			
 			//Debug
 			if(indice == 9)
 				Utils.matToBitmap(mauxiliar, mBitmapPreview);
 			
 			Imgproc.morphologyEx(mauxiliar,mauxiliar,Imgproc.MORPH_DILATE,
-					Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(10,10)));
+					Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(20,20)));
 			//Debug
 			if(indice == 10)
 				Utils.matToBitmap(mauxiliar, mBitmapPreview);
@@ -289,13 +297,13 @@ public class OCRCamera extends Activity implements CvCameraViewListener {
 			}
 			
 			
-			Arrays.sort(mLppp,new Comparator<Point>() {
+			/*Arrays.sort(mLppp,new Comparator<Point>() {
 				@Override
 				public int compare(Point lhs, Point rhs) {
 					// TODO Auto-generated method stub
 					return 0;
 				}
-			});
+			});*/
 			
 			mcontours.clear();
 			/*auxiliar.convertTo(auxiliar, CvType.CV_8UC4);
